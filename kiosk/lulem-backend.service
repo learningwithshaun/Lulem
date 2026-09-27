@@ -1,0 +1,20 @@
+[Unit]
+Description=Lulem FastAPI media server (API + signage frontend)
+Documentation=file://{{REPO_DIR}}/kiosk/README.md
+After=network-online.target
+Wants=network-online.target
+# Never give up restarting — the kiosk display depends on this service.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User={{KIOSK_USER}}
+WorkingDirectory={{REPO_DIR}}
+# Optional; the "-" prefix makes a missing .env file non-fatal.
+EnvironmentFile=-{{REPO_DIR}}/.env
+ExecStart={{REPO_DIR}}/.venv/bin/uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --log-level info
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

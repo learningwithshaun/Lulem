@@ -1,0 +1,4 @@
+# Shell scripts and systemd units must use LF endings or they break on Linux
+# (CRLF makes shebangs fail with "bad interpreter" and corrupt unit values).
+*.sh text eol=lf
+*.service text eol=lf

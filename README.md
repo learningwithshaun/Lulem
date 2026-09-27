@@ -12,6 +12,7 @@ Spark/Zuke will eventually provide the advertising data and business logic. This
 - Configurable advertising and YouTube durations
 - `play_count` campaign frequency control
 - Five-minute maximum advertising section
+- In-store kiosk mode: locked-down, self-healing Raspberry Pi display
 - Safe handling of empty, malformed, unpaid, inactive, and broken media
 - FastAPI endpoint for serving validated media data
 - Optional mock/real GPIO and Paystack webhook prototype retained separately
@@ -23,7 +24,7 @@ frontend/            TV signage UI (HTML, CSS, Vanilla JavaScript)
   media.json         Development media contract
 backend/app/         FastAPI media API and services
 hardware/            Optional mock/real GPIO controllers
-kiosk/               Raspberry Pi Chromium kiosk examples
+kiosk/               In-store kiosk mode: Pi installer, Chromium launcher, systemd units
 tests/               Backend and GPIO tests
 ```
 
@@ -118,6 +119,24 @@ The backend and frontend ignore invalid entries individually. They use safe defa
 8. Reload the media configuration and repeat.
 
 `play_count` is deliberately used instead of advertising slots: it is simple, explicit, and easy for Spark/Zuke to generate without introducing an auction or scheduling system.
+
+## In-store kiosk display (Raspberry Pi)
+
+To run the display like a McDonald's in-store screen — a monitor that boots
+straight into your ads with no tabs, no desktop, and no way for anyone at the
+screen to close, minimise or control it — use the kiosk mode:
+
+```bash
+# On the Pi, from the repo root:
+sudo ./kiosk/setup-kiosk.sh
+sudo reboot
+```
+
+The installer wires up three lockdown layers (hardened `--kiosk` Chromium
+launcher, a page guard that blocks right-click/shortcuts/navigation and
+self-heals every 6 hours, and systemd services that survive crashes and power
+cuts). See [kiosk/README.md](kiosk/README.md) for the full guide, physical
+lockdown advice, maintenance commands and troubleshooting.
 
 ## Tests
 

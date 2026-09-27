@@ -1,15 +1,19 @@
 [Unit]
-Description=Smart Retail Chromium Kiosk
-After=graphical.target network-online.target
+Description=Lulem signage Chromium kiosk (alternative X11 launcher)
+Documentation=file://{{REPO_DIR}}/kiosk/README.md
+After=network-online.target display-manager.service lulem-backend.service
 Wants=network-online.target
+# Never give up restarting — an in-store display must always come back.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-User=pi
+User={{KIOSK_USER}}
 Environment=DISPLAY=:0
+Environment=XAUTHORITY={{KIOSK_HOME}}/.Xauthority
 Environment=DISPLAY_URL=http://127.0.0.1:8000
-ExecStart=/home/pi/Smart-Retail-Display/kiosk/start-kiosk.sh
-Restart=on-failure
+ExecStart={{REPO_DIR}}/kiosk/start-kiosk.sh
+Restart=always
 RestartSec=5
 
 [Install]
