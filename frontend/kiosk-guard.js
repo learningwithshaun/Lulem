@@ -27,6 +27,15 @@
   const kioskParam = (params.get("kiosk") || "").toLowerCase();
   if (kioskParam !== "1" && kioskParam !== "true") return;
 
+  // ── 0. Cursor suppression ──────────────────────────────────────────────────
+  // The kiosk page fills 100% of the screen, so hiding the cursor here works
+  // on both X11 and Wayland without X11-only tools (unclutter is a no-op on
+  // Bookworm's labwc/Wayland session). Known limit: the cross-origin YouTube
+  // iframe draws its own cursor — leave the mouse unplugged in store.
+  const cursorStyle = document.createElement("style");
+  cursorStyle.textContent = "html, body, body * { cursor: none !important; }";
+  document.head.appendChild(cursorStyle);
+
   // ── 1. Pointer lockdown ────────────────────────────────────────────────────
   ["contextmenu", "selectstart", "dragstart"].forEach((type) => {
     document.addEventListener(type, (event) => event.preventDefault());

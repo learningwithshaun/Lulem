@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lulem</title>
+  <!--
+    Black boot cover for the in-store display (see kiosk/start-kiosk.sh).
+
+    Chromium loads this file:// page the instant the desktop session starts,
+    so the desktop (and any Chromium error page) is never visible while the
+    FastAPI backend boots. Once the backend answers the probe below, the page
+    navigates to the real display with ?kiosk=1, which activates
+    frontend/kiosk-guard.js.
+  -->
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+    }
+    html, body, html * {
+      cursor: none !important;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    (() => {
+      "use strict";
+
+      // Minimal lockdown while the splash is on screen (kiosk-guard.js only
+      // runs on the real display, once the backend is up).
+      document.addEventListener("contextmenu", (event) => event.preventDefault());
+
+      const params = new URLSearchParams(window.location.search);
+      let base = params.get("next") || "http://127.0.0.1:8000";
+      try {
+        const parsed = new URL(base);
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          throw new Error("unsupported scheme: " + parsed.protocol);
+        }
+        base = base.replace(/\/+$/, "");
+      } catch (error) {
+        console.warn("[kiosk-splash] Ignoring invalid ?next= URL:", error);
+        base = "http://127.0.0.1:8000";
+      }
+
+      const POLL_MS = 1000;
+      // After 2 minutes navigate anyway — the same 2-minute grace the old
+      // launcher waited. If the backend is genuinely down the user sees the
+      // fault over SSH (see kiosk/README.md troubleshooting); if the probe
+      // itself is blocked by a browser policy, the redirect still lands on
+      // the display as soon as the page can reach it.
+      const GIVE_UP_MS = 120000;
+      const startedAt = Date.now();
+
+      const goToDisplay = () => window.location.replace(base + "/?kiosk=1");
+
+      // `mode: "no-cors"` sends the request without needing any CORS change
+      // to the backend (its allow-list stays untouched): it resolves with an
+      // opaque response as soon as a server answers, and rejects while
+      // nothing is listening on the port — exactly the readiness signal we
+      // need. The cache-busting query forces a live check.
+      const probe = async () => {
+        try {
+          await fetch(base + "/api/media?t=" + Date.now(), { mode: "no-cors" });
+          return true;
+        } catch (error) {
+          return false;
+        }
+      };
+
+      (async () => {
+        for (;;) {
+          if (await probe()) {
+            console.info("[kiosk-splash] Backend is up; navigating to the display.");
+            goToDisplay();
+            return;
+          }
+          if (Date.now() - startedAt >= GIVE_UP_MS) {
+            console.warn("[kiosk-splash] Backend still not answering after 2 minutes; navigating anyway.");
+            goToDisplay();
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+        }
+      })();
+    })();
+  </script>
+</body>
+</html>
