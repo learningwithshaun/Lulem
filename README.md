@@ -17,6 +17,13 @@ Spark/Zuke will eventually provide the advertising data and business logic. This
 - FastAPI endpoint for serving validated media data
 - Optional mock/real GPIO and Paystack webhook prototype retained separately
 
+## Documentation
+
+- [`docs/API.md`](docs/API.md) — data contract and API reference.
+- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — architecture, codebase
+  walkthrough, testing conventions, and common developer tasks.
+- [`kiosk/README.md`](kiosk/README.md) — Raspberry Pi in-store kiosk guide.
+
 ## Project structure
 
 ```text
